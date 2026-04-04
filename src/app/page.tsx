@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, PenSquare, Trash2, Calendar, Plus, LogOut } from "lucide-react";
+import { CheckCircle2, Circle, PenSquare, Trash2, Calendar, Plus, LogOut, Users, Network } from "lucide-react";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -97,6 +97,16 @@ export default function Home() {
             <p className="text-muted-foreground mt-2">Welcome, {session?.user?.name || session?.user?.email}</p>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/connections" passHref>
+              <Button variant="outline" className="rounded-full px-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                <Users className="mr-2 h-4 w-4" /> Connections
+              </Button>
+            </Link>
+            <Link href="/shared" passHref>
+              <Button variant="outline" className="rounded-full px-6 shadow-lg hover:shadow-xl transition-all duration-300 text-blue-600 border-blue-600/30 hover:bg-blue-600/10 hover:text-blue-700">
+                <Network className="mr-2 h-4 w-4" /> Shared Tasks
+              </Button>
+            </Link>
             <Link href="/create" passHref>
               <Button className="rounded-full px-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <Plus className="mr-2 h-4 w-4" /> New Task

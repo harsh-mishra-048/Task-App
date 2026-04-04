@@ -17,6 +17,18 @@ db.exec(`
   )
 `);
 
+// Create the connections table if it doesn't exist
+db.exec(`
+  CREATE TABLE IF NOT EXISTS connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invitor_email TEXT NOT NULL,
+    invited_email TEXT NOT NULL,
+    token TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Simple migration for existing database
 try {
   db.prepare('SELECT user_email FROM todos LIMIT 1').get();
