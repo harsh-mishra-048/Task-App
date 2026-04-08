@@ -35,16 +35,16 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, target_date } = body;
+    const { title, target_date, assigned_to } = body;
 
     if (!title || !target_date) {
       return NextResponse.json({ error: 'Title and target_date are required' }, { status: 400 });
     }
 
-    const stmt = db.prepare('INSERT INTO todos (title, target_date, status, user_email) VALUES (?, ?, ?, ?)');
-    const info = stmt.run(title, target_date, 'pending', session.user.email);
+    const stmt = db.prepare('INSERT INTO todos (title, target_date, status, user_email, assigned_to) VALUES (?, ?, ?, ?, ?)');
+    const info = stmt.run(title, target_date, 'pending', session.user.email, assigned_to || null);
 
-    return NextResponse.json({ id: info.lastInsertRowid, title, target_date, status: 'pending', user_email: session.user.email });
+    return NextResponse.json({ id: info.lastInsertRowid, title, target_date, status: 'pending', user_email: session.user.email, assigned_to: assigned_to || null });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create todo' }, { status: 500 });
   }

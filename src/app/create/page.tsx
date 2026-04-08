@@ -18,12 +18,37 @@ export default function CreateTodo() {
   const [targetDate, setTargetDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [connections, setConnections] = useState<{ email: string }[]>([]);
+  const [assignedTo, setAssignedTo] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
+    } else if (status === "authenticated") {
+      fetchConnections();
     }
   }, [status, router]);
+
+  const fetchConnections = async () => {
+    try {
+      const res = await fetch("/api/connections");
+      if (res.ok) {
+        const data = await res.json();
+        const acceptedSent = data.sent.filter((c: any) => c.status === "accepted");
+        const acceptedReceived = data.received.filter((c: any) => c.status === "accepted");
+        
+        // Merge unique emails
+        const allEmails = Array.from(new Set([
+          ...acceptedSent.map((c: any) => c.email),
+          ...acceptedReceived.map((c: any) => c.email)
+        ])).map(email => ({ email }));
+        
+        setConnections(allEmails);
+      }
+    } catch (err) {
+      console.error("Failed to fetch connections", err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +66,11 @@ export default function CreateTodo() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title, target_date: targetDate }),
+        body: JSON.stringify({ 
+          title, 
+          target_date: targetDate,
+          assigned_to: assignedTo === "none" ? null : assignedTo 
+        }),
       });
 
       if (res.ok) {
@@ -126,6 +155,26 @@ export default function CreateTodo() {
                     className="bg-background/50 h-12 pl-10 text-base transition-colors focus-visible:ring-primary w-full"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="assignedTo" className="text-base">Assign To (Optional)</Label>
+                <select
+                  id="assignedTo"
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  className="w-full bg-background/50 h-12 px-4 rounded-md border border-input text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors appearance-none"
+                >
+                  <option value="none">Keep for myself</option>
+                  {connections.map((conn) => (
+                    <option key={conn.email} value={conn.email}>
+                      {conn.email}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1 px-1">
+                  Only accepted connections will appear here.
+                </p>
               </div>
             </CardContent>
             <CardFooter className="bg-muted/10 border-t border-border/50 pt-6 px-6 pb-6">

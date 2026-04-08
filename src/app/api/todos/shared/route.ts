@@ -12,10 +12,7 @@ export async function GET(request: Request) {
   try {
     const stmt = db.prepare(`
       SELECT * FROM todos 
-      WHERE user_email IN (
-        SELECT invitor_email FROM connections 
-        WHERE invited_email = ? AND status = 'accepted'
-      )
+      WHERE assigned_to = ?
       ORDER BY user_email ASC, target_date DESC, created_at DESC
     `);
     const todos = stmt.all(session.user.email) as { user_email: string, [key: string]: any }[];

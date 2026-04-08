@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, PenSquare, Trash2, Calendar, Plus, LogOut, Users, Network } from "lucide-react";
+import { CheckCircle2, Circle, PenSquare, Trash2, Calendar, Plus, LogOut, Users, Network, User } from "lucide-react";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -15,6 +15,7 @@ type Todo = {
   status: "pending" | "completed";
   target_date: string;
   created_at: string;
+  assigned_to: string | null;
 };
 
 export default function Home() {
@@ -126,24 +127,24 @@ export default function Home() {
                 Schedule
               </CardTitle>
               <div className="flex gap-2">
-                <Button 
-                  variant={filterDate === "all" ? "default" : "outline"} 
-                  size="sm" 
+                <Button
+                  variant={filterDate === "all" ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setFilterDate("all")}
                   className="rounded-full"
                 >
                   All
                 </Button>
-                <Button 
-                  variant={filterDate === todayStr ? "default" : "outline"} 
-                  size="sm" 
+                <Button
+                  variant={filterDate === todayStr ? "default" : "outline"}
+                  size="sm"
                   onClick={() => setFilterDate(todayStr)}
                   className="rounded-full"
                 >
                   Today
                 </Button>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="bg-transparent text-sm border-b border-border outline-none focus:border-primary transition-colors text-foreground"
                   onChange={(e) => setFilterDate(e.target.value)}
                   value={filterDate !== "all" && filterDate !== todayStr ? filterDate : ""}
@@ -164,16 +165,15 @@ export default function Home() {
             ) : (
               <ul className="space-y-3">
                 {todos.map((todo) => (
-                  <li 
-                    key={todo.id} 
-                    className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
-                      todo.status === "completed" 
-                        ? "bg-muted/30 border-transparent opacity-75" 
+                  <li
+                    key={todo.id}
+                    className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${todo.status === "completed"
+                        ? "bg-muted/30 border-transparent opacity-75"
                         : "bg-background border-border shadow-sm hover:shadow-md"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <button 
+                      <button
                         onClick={() => toggleStatus(todo.id, todo.status)}
                         className="text-primary hover:scale-110 transition-transform"
                       >
@@ -187,12 +187,19 @@ export default function Home() {
                         <h3 className={`font-medium text-lg transition-colors ${todo.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>
                           {todo.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" /> {new Date(todo.target_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" /> {new Date(todo.target_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                          </span>
+                          {todo.assigned_to && (
+                            <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                              <User className="h-3 w-3" /> Assigned to: {todo.assigned_to}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Tooltip title="Edit">
                         <Link href={`/edit/${todo.id}`} passHref>

@@ -15,27 +15,18 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const body = await request.json();
     const { title, status, target_date } = body;
 
-    // Check ownership
-    const checkStmt = db.prepare('SELECT user_email FROM todos WHERE id = ?');
-    const todo = checkStmt.get(id) as { user_email: string } | undefined;
+    // Check ownership and assignment
+    const checkStmt = db.prepare('SELECT user_email, assigned_to FROM todos WHERE id = ?');
+    const todo = checkStmt.get(id) as { user_email: string, assigned_to: string | null } | undefined;
 
     if (!todo) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
     const isOwner = todo.user_email === session.user.email;
-    
-    // Check if connected (if not owner)
-    let isConnected = false;
-    if (!isOwner) {
-      const connStmt = db.prepare('SELECT id FROM connections WHERE invitor_email = ? AND invited_email = ? AND status = ?');
-      const connection = connStmt.get(todo.user_email, session.user.email, 'accepted');
-      if (connection) {
-        isConnected = true;
-      }
-    }
+    const isAssignee = todo.assigned_to === session.user.email;
 
-    if (!isOwner && !isConnected) {
+    if (!isOwner && !isAssignee) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -138,19 +129,11 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
-    if (todo.user_email === session.user.email) {
+    if (todo.user_email === session.user.email || todo.assigned_to === session.user.email) {
       return NextResponse.json(todo);
     }
 
-    // Check connection
-    const connStmt = db.prepare('SELECT id FROM connections WHERE invitor_email = ? AND invited_email = ? AND status = ?');
-    const connection = connStmt.get(todo.user_email, session.user.email, 'accepted');
-
-    if (!connection) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    return NextResponse.json(todo);
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   } catch (error) {
     console.error("GET /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to fetch todo' }, { status: 500 });

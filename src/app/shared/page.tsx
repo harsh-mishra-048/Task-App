@@ -93,20 +93,20 @@ export default function SharedTasks() {
         <header>
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 flex items-center gap-3">
             <Network className="h-10 w-10 text-primary" /> 
-            {selectedUser ? `Tasks: ${selectedUser}` : "Network Tasks"}
+            {selectedUser ? `Assigned by: ${selectedUser}` : "Tasks Assigned to Me"}
           </h1>
           <p className="text-muted-foreground mt-2">
             {selectedUser 
-              ? `Managing shared tasks for ${selectedUser}` 
-              : "Select a connection to view and manage their shared tasks."}
+              ? `Tasks delegated to you by ${selectedUser}` 
+              : "Review and manage tasks that have been specifically assigned to you by your network."}
           </p>
         </header>
 
         {emails.length === 0 ? (
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-xl">
             <CardContent className="p-12 text-center text-muted-foreground">
-              <p className="text-lg">No shared connections discovered.</p>
-              <p className="text-sm mt-2">Connect with others to see their tasks here.</p>
+              <p className="text-lg">No assigned tasks found.</p>
+              <p className="text-sm mt-2">When someone assigns a task to you, it will appear here.</p>
               <Link href="/connections" passHref>
                 <Button className="mt-6 rounded-full" variant="outline">Invite Someone</Button>
               </Link>
@@ -128,7 +128,7 @@ export default function SharedTasks() {
                     </div>
                     <div>
                       <CardTitle className="text-lg font-semibold">{email}</CardTitle>
-                      <CardDescription>{groupedTodos[email].length} shared tasks</CardDescription>
+                      <CardDescription>{groupedTodos[email].length} assigned tasks</CardDescription>
                     </div>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -142,7 +142,7 @@ export default function SharedTasks() {
             <Card className="border-none shadow-2xl bg-card/60 backdrop-blur-xl">
               <CardHeader className="border-b border-border/50 bg-muted/20">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Tasks for {selectedUser}</CardTitle>
+                  <CardTitle className="text-xl">Assigned by {selectedUser}</CardTitle>
                   <Button variant="outline" size="sm" onClick={() => setSelectedUser(null)}>
                     Select Another
                   </Button>
