@@ -70,14 +70,15 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: 'No fields to update or unauthorized for these fields' }, { status: 400 });
     }
 
-    values.push(id);
+    const todoId = Number(id);
+    values.push(todoId);
     const stmt = db.prepare(`UPDATE todos SET ${updates.join(', ')} WHERE id = ?`);
     stmt.run(...values);
 
-    const updatedTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
+    const updatedTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(todoId);
     return NextResponse.json(updatedTodo);
   } catch (error) {
-    console.error("PUT error:", error);
+    console.error("PUT /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to update todo' }, { status: 500 });
   }
 }
@@ -91,16 +92,31 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
   const params = await props.params;
   try {
     const { id } = params;
-    // Strictly only owner can delete
-    const stmt = db.prepare('DELETE FROM todos WHERE id = ? AND user_email = ?');
-    const info = stmt.run(id, session.user.email);
+    const todoId = Number(id);
+
+    // Fetch todo to check ownership
+    const checkStmt = db.prepare('SELECT user_email FROM todos WHERE id = ?');
+    const todo = checkStmt.get(todoId) as { user_email: string } | undefined;
+
+    if (!todo) {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    }
+
+    if (todo.user_email !== session.user.email) {
+      return NextResponse.json({ error: 'Unauthorized to delete this todo' }, { status: 403 });
+    }
+
+    // Perform actual delete
+    const stmt = db.prepare('DELETE FROM todos WHERE id = ?');
+    const info = stmt.run(todoId);
 
     if (info.changes === 0) {
-      return NextResponse.json({ error: 'Todo not found or unauthorized' }, { status: 404 });
+      return NextResponse.json({ error: 'Failed to delete todo' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("DELETE /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to delete todo' }, { status: 500 });
   }
 }
@@ -136,6 +152,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     return NextResponse.json(todo);
   } catch (error) {
+    console.error("GET /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to fetch todo' }, { status: 500 });
   }
 }
