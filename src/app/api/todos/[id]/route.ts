@@ -3,6 +3,43 @@ import db from '@/lib/db';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const params = await props.params;
+  try {
+    const { id } = params;
+    
+    const todo = await db.todo.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!todo) {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    }
+
+    if (todo.userEmail === session.user.email || todo.assignedTo === session.user.email) {
+      return NextResponse.json({
+        id: todo.id,
+        title: todo.title,
+        status: todo.status,
+        target_date: todo.targetDate,
+        user_email: todo.userEmail,
+        assigned_to: todo.assignedTo,
+        created_at: todo.createdAt,
+      });
+    }
+
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  } catch (error) {
+    console.error("GET /api/todos/[id] error:", error);
+    return NextResponse.json({ error: 'Failed to fetch todo' }, { status: 500 });
+  }
+}
+
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -15,59 +52,48 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const body = await request.json();
     const { title, status, target_date } = body;
 
+    const todoId = Number(id);
+
     // Check ownership and assignment
-    const checkStmt = db.prepare('SELECT user_email, assigned_to FROM todos WHERE id = ?');
-    const todo = checkStmt.get(id) as { user_email: string, assigned_to: string | null } | undefined;
+    const todo = await db.todo.findUnique({
+      where: { id: todoId },
+    });
 
     if (!todo) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
-    const isOwner = todo.user_email === session.user.email;
-    const isAssignee = todo.assigned_to === session.user.email;
+    const isOwner = todo.userEmail === session.user.email;
+    const isAssignee = todo.assignedTo === session.user.email;
 
     if (!isOwner && !isAssignee) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const updates = [];
-    const values = [];
-
+    const updateData: any = {};
     if (isOwner) {
-      // Owner can update everything
-      if (title !== undefined) {
-        updates.push('title = ?');
-        values.push(title);
-      }
-      if (status !== undefined) {
-        updates.push('status = ?');
-        values.push(status);
-      }
-      if (target_date !== undefined) {
-        updates.push('target_date = ?');
-        values.push(target_date);
-      }
+      if (title !== undefined) updateData.title = title;
+      if (status !== undefined) updateData.status = status;
+      if (target_date !== undefined) updateData.targetDate = target_date;
     } else {
-      // Connection can ONLY update status
-      if (status !== undefined) {
-        updates.push('status = ?');
-        values.push(status);
-      }
-      // If they try to update title or target_date, we just ignore or could error. 
-      // The plan said: "I will only enable the toggle to prevent accidental data loss."
+      // Assignee can only update status
+      if (status !== undefined) updateData.status = status;
     }
 
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No fields to update or unauthorized for these fields' }, { status: 400 });
-    }
+    const updatedTodo = await db.todo.update({
+      where: { id: todoId },
+      data: updateData,
+    });
 
-    const todoId = Number(id);
-    values.push(todoId);
-    const stmt = db.prepare(`UPDATE todos SET ${updates.join(', ')} WHERE id = ?`);
-    stmt.run(...values);
-
-    const updatedTodo = db.prepare('SELECT * FROM todos WHERE id = ?').get(todoId);
-    return NextResponse.json(updatedTodo);
+    return NextResponse.json({
+      id: updatedTodo.id,
+      title: updatedTodo.title,
+      status: updatedTodo.status,
+      target_date: updatedTodo.targetDate,
+      user_email: updatedTodo.userEmail,
+      assigned_to: updatedTodo.assignedTo,
+      created_at: updatedTodo.createdAt,
+    });
   } catch (error) {
     console.error("PUT /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to update todo' }, { status: 500 });
@@ -85,57 +111,25 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     const { id } = params;
     const todoId = Number(id);
 
-    // Fetch todo to check ownership
-    const checkStmt = db.prepare('SELECT user_email FROM todos WHERE id = ?');
-    const todo = checkStmt.get(todoId) as { user_email: string } | undefined;
+    const todo = await db.todo.findUnique({
+      where: { id: todoId },
+    });
 
     if (!todo) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
-    if (todo.user_email !== session.user.email) {
+    if (todo.userEmail !== session.user.email) {
       return NextResponse.json({ error: 'Unauthorized to delete this todo' }, { status: 403 });
     }
 
-    // Perform actual delete
-    const stmt = db.prepare('DELETE FROM todos WHERE id = ?');
-    const info = stmt.run(todoId);
-
-    if (info.changes === 0) {
-      return NextResponse.json({ error: 'Failed to delete todo' }, { status: 500 });
-    }
+    await db.todo.delete({
+      where: { id: todoId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/todos/[id] error:", error);
     return NextResponse.json({ error: 'Failed to delete todo' }, { status: 500 });
-  }
-}
-
-export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const params = await props.params;
-  try {
-    const { id } = params;
-    
-    const stmt = db.prepare('SELECT * FROM todos WHERE id = ?');
-    const todo = stmt.get(id) as any;
-
-    if (!todo) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
-    }
-
-    if (todo.user_email === session.user.email || todo.assigned_to === session.user.email) {
-      return NextResponse.json(todo);
-    }
-
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  } catch (error) {
-    console.error("GET /api/todos/[id] error:", error);
-    return NextResponse.json({ error: 'Failed to fetch todo' }, { status: 500 });
   }
 }

@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Todo {
+  id         Int      @id @default(autoincrement())
+  title      String
+  status     String   @default("pending")
+  targetDate String   @map("target_date")
+  userEmail  String   @map("user_email")
+  assignedTo String?  @map("assigned_to")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("todos")
+}
+
+model Connection {
+  id            Int      @id @default(autoincrement())
+  invitorEmail  String   @map("invitor_email")
+  invitedEmail  String   @map("invited_email")
+  token         String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("connections")
+}

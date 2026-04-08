@@ -12,14 +12,32 @@ export async function GET(request: Request) {
   }
 
   try {
-    const sentStmt = db.prepare('SELECT id, invited_email as email, status FROM connections WHERE invitor_email = ? ORDER BY created_at DESC');
-    const sent = sentStmt.all(session.user.email);
+    const sent = await db.connection.findMany({
+      where: { invitorEmail: session.user.email },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    const receivedStmt = db.prepare('SELECT id, invitor_email as email, status FROM connections WHERE invited_email = ? ORDER BY created_at DESC');
-    const received = receivedStmt.all(session.user.email);
+    const received = await db.connection.findMany({
+      where: { invitedEmail: session.user.email },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    return NextResponse.json({ sent, received });
+    // Map to frontend snake_case
+    const mappedSent = sent.map(c => ({
+      id: c.id,
+      email: c.invitedEmail,
+      status: c.status,
+    }));
+
+    const mappedReceived = received.map(c => ({
+      id: c.id,
+      email: c.invitorEmail,
+      status: c.status,
+    }));
+
+    return NextResponse.json({ sent: mappedSent, received: mappedReceived });
   } catch (error) {
+    console.error("GET /api/connections error:", error);
     return NextResponse.json({ error: 'Failed to fetch connections' }, { status: 500 });
   }
 }
@@ -42,22 +60,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You cannot invite yourself' }, { status: 400 });
     }
 
-    const checkStmt = db.prepare('SELECT id FROM connections WHERE invitor_email = ? AND invited_email = ?');
-    const existing = checkStmt.get(session.user.email, invited_email);
+    const existing = await db.connection.findFirst({
+      where: {
+        invitorEmail: session.user.email,
+        invitedEmail: invited_email,
+      },
+    });
+
     if (existing) {
       return NextResponse.json({ error: 'Invitation already sent to this user' }, { status: 400 });
     }
 
     const token = crypto.randomBytes(32).toString('hex');
 
-    const stmt = db.prepare('INSERT INTO connections (invitor_email, invited_email, token, status) VALUES (?, ?, ?, ?)');
-    stmt.run(session.user.email, invited_email, token, 'pending');
+    await db.connection.create({
+      data: {
+        invitorEmail: session.user.email,
+        invitedEmail: invited_email,
+        token: token,
+        status: 'pending',
+      },
+    });
 
     try {
       if (process.env.SMTP_USER) {
         await sendInviteEmail(invited_email, session.user.email, token);
       } else {
-        console.warn("SMTP_USER not provided. Skipping email send. The DB token is generated.");
+        console.warn("SMTP_USER not provided. Skipping email send.");
       }
     } catch (mailError) {
       console.error("Failed to send email:", mailError);
@@ -65,7 +94,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, invited_email, status: 'pending' });
   } catch (error) {
-    console.error("Connection creation error:", error);
+    console.error("POST /api/connections error:", error);
     return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
   }
 }

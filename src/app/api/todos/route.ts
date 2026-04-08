@@ -13,16 +13,30 @@ export async function GET(request: Request) {
   const date = searchParams.get('date');
 
   try {
-    let todos;
-    if (date) {
-      const stmt = db.prepare('SELECT * FROM todos WHERE target_date = ? AND user_email = ? ORDER BY created_at DESC');
-      todos = stmt.all(date, session.user.email);
-    } else {
-      const stmt = db.prepare('SELECT * FROM todos WHERE user_email = ? ORDER BY created_at DESC');
-      todos = stmt.all(session.user.email);
-    }
-    return NextResponse.json(todos);
+    const todos = await db.todo.findMany({
+      where: {
+        userEmail: session.user.email,
+        ...(date ? { targetDate: date } : {}),
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Map to frontend snake_case
+    const mappedTodos = todos.map(todo => ({
+      id: todo.id,
+      title: todo.title,
+      status: todo.status,
+      target_date: todo.targetDate,
+      user_email: todo.userEmail,
+      assigned_to: todo.assignedTo,
+      created_at: todo.createdAt,
+    }));
+
+    return NextResponse.json(mappedTodos);
   } catch (error) {
+    console.error("GET /api/todos error:", error);
     return NextResponse.json({ error: 'Failed to fetch todos' }, { status: 500 });
   }
 }
@@ -41,11 +55,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title and target_date are required' }, { status: 400 });
     }
 
-    const stmt = db.prepare('INSERT INTO todos (title, target_date, status, user_email, assigned_to) VALUES (?, ?, ?, ?, ?)');
-    const info = stmt.run(title, target_date, 'pending', session.user.email, assigned_to || null);
+    const todo = await db.todo.create({
+      data: {
+        title,
+        targetDate: target_date,
+        status: 'pending',
+        userEmail: session.user.email,
+        assignedTo: assigned_to || null,
+      },
+    });
 
-    return NextResponse.json({ id: info.lastInsertRowid, title, target_date, status: 'pending', user_email: session.user.email, assigned_to: assigned_to || null });
+    return NextResponse.json({
+      id: todo.id,
+      title: todo.title,
+      status: todo.status,
+      target_date: todo.targetDate,
+      user_email: todo.userEmail,
+      assigned_to: todo.assignedTo,
+      created_at: todo.createdAt,
+    });
   } catch (error) {
+    console.error("POST /api/todos error:", error);
     return NextResponse.json({ error: 'Failed to create todo' }, { status: 500 });
   }
 }

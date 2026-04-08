@@ -10,24 +10,37 @@ export async function GET(request: Request) {
   }
 
   try {
-    const stmt = db.prepare(`
-      SELECT * FROM todos 
-      WHERE assigned_to = ?
-      ORDER BY user_email ASC, target_date DESC, created_at DESC
-    `);
-    const todos = stmt.all(session.user.email) as { user_email: string, [key: string]: any }[];
+    const todos = await db.todo.findMany({
+      where: {
+        assignedTo: session.user.email,
+      },
+      orderBy: [
+        { userEmail: 'asc' },
+        { targetDate: 'desc' },
+        { createdAt: 'desc' },
+      ],
+    });
 
-    // Group by user_email
+    // Group by userEmail (mapped to user_email in response)
     const grouped: Record<string, any[]> = {};
     for (const todo of todos) {
-      if (!grouped[todo.user_email]) {
-        grouped[todo.user_email] = [];
+      if (!grouped[todo.userEmail]) {
+        grouped[todo.userEmail] = [];
       }
-      grouped[todo.user_email].push(todo);
+      grouped[todo.userEmail].push({
+        id: todo.id,
+        title: todo.title,
+        status: todo.status,
+        target_date: todo.targetDate,
+        user_email: todo.userEmail,
+        assigned_to: todo.assignedTo,
+        created_at: todo.createdAt,
+      });
     }
 
     return NextResponse.json(grouped);
   } catch (error) {
+    console.error("GET /api/todos/shared error:", error);
     return NextResponse.json({ error: 'Failed to fetch shared todos' }, { status: 500 });
   }
 }

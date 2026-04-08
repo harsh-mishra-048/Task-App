@@ -10,8 +10,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    const checkStmt = db.prepare('SELECT id, status FROM connections WHERE token = ?');
-    const connection = checkStmt.get(token) as { id: number; status: string } | undefined;
+    const connection = await db.connection.findFirst({
+      where: { token },
+    });
 
     if (!connection) {
       return NextResponse.json({ error: 'Invalid invitation token' }, { status: 404 });
@@ -21,8 +22,10 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    const updateStmt = db.prepare('UPDATE connections SET status = ? WHERE id = ?');
-    updateStmt.run('accepted', connection.id);
+    await db.connection.update({
+      where: { id: connection.id },
+      data: { status: 'accepted' },
+    });
 
     return NextResponse.redirect(new URL('/', request.url));
   } catch (error) {
