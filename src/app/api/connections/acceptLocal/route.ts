@@ -17,14 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Connection ID is required' }, { status: 400 });
     }
 
-    const checkStmt = db.prepare('SELECT id, status, invited_email FROM connections WHERE id = ?');
-    const connection = checkStmt.get(id) as { id: number; status: string; invited_email: string } | undefined;
+    const connection = await db.connection.findUnique({
+      where: { id: Number(id) },
+    });
 
     if (!connection) {
       return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
     }
 
-    if (connection.invited_email !== session.user.email) {
+    if (connection.invitedEmail !== session.user.email) {
       return NextResponse.json({ error: 'Unauthorized to accept this invitation' }, { status: 403 });
     }
 
@@ -32,8 +33,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'Already accepted' });
     }
 
-    const updateStmt = db.prepare('UPDATE connections SET status = ? WHERE id = ?');
-    updateStmt.run('accepted', connection.id);
+    await db.connection.update({
+      where: { id: connection.id },
+      data: { status: 'accepted' },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
