@@ -37,7 +37,6 @@ export default function CreateTodo() {
         const acceptedSent = data.sent.filter((c: any) => c.status === "accepted");
         const acceptedReceived = data.received.filter((c: any) => c.status === "accepted");
 
-        // Merge unique emails
         const allEmails = Array.from(new Set([
           ...acceptedSent.map((c: any) => c.email),
           ...acceptedReceived.map((c: any) => c.email)

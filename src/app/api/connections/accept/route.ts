@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
+
   const token = searchParams.get("token");
 
   if (!token) {
@@ -21,11 +30,18 @@ export async function GET(request: Request) {
       );
     }
 
+    if (connection.invitedEmail.toLowerCase() !== session.user.email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "This invitation was intended for another user" },
+        { status: 403 },
+      );
+    }
+
     const headers = request.headers;
     const protocol = headers.get("x-forwarded-proto") || "http";
     const host = headers.get("x-forwarded-host") || headers.get("host");
 
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = `${protocol}://${host}/task_app`;
 
     if (connection.status === "accepted") {
       return NextResponse.redirect(`${baseUrl}/`);
