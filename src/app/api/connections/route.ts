@@ -22,7 +22,6 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Map to frontend snake_case
     const mappedSent = sent.map(c => ({
       id: c.id,
       email: c.invitedEmail,
