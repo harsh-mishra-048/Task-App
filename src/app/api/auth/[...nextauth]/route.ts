@@ -8,18 +8,19 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.email) {
-        session.user.email = token.email;
-      }
-      return session;
+  secret: process.env.NEXTAUTH_SECRET,
+  // pages: {
+  //   signIn: "/task_app/signin",
+  //   error: "/task_app/signin",
+  // },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        path: "/task_app",
+      },
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);
