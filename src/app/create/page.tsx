@@ -13,7 +13,7 @@ import { ArrowLeft, Save, Calendar } from "lucide-react";
 export default function CreateTodo() {
   const { status } = useSession();
   const router = useRouter();
-  
+
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,18 +31,18 @@ export default function CreateTodo() {
 
   const fetchConnections = async () => {
     try {
-      const res = await fetch("/api/connections");
+      const res = await fetch("/task_app/api/connections");
       if (res.ok) {
         const data = await res.json();
         const acceptedSent = data.sent.filter((c: any) => c.status === "accepted");
         const acceptedReceived = data.received.filter((c: any) => c.status === "accepted");
-        
+
         // Merge unique emails
         const allEmails = Array.from(new Set([
           ...acceptedSent.map((c: any) => c.email),
           ...acceptedReceived.map((c: any) => c.email)
         ])).map(email => ({ email }));
-        
+
         setConnections(allEmails);
       }
     } catch (err) {
@@ -61,15 +61,15 @@ export default function CreateTodo() {
     setError("");
 
     try {
-      const res = await fetch("/api/todos", {
+      const res = await fetch("/task_app/api/todos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          title, 
+        body: JSON.stringify({
+          title,
           target_date: targetDate,
-          assigned_to: assignedTo === "none" ? null : assignedTo 
+          assigned_to: assignedTo === "none" ? null : assignedTo
         }),
       });
 
@@ -107,7 +107,7 @@ export default function CreateTodo() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
           </Button>
         </Link>
-        
+
         <Card className="border-none shadow-2xl bg-card/60 backdrop-blur-xl">
           <CardHeader className="text-center pb-8 border-b border-border/50">
             <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
@@ -124,12 +124,12 @@ export default function CreateTodo() {
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-3">
                 <Label htmlFor="title" className="text-base">Task Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="e.g., Read a book for 30 minutes" 
+                <Input
+                  id="title"
+                  placeholder="e.g., Read a book for 30 minutes"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="bg-background/50 h-12 text-base transition-colors focus-visible:ring-primary"
@@ -147,9 +147,9 @@ export default function CreateTodo() {
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <Input 
+                  <Input
                     type="date"
-                    id="targetDate" 
+                    id="targetDate"
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
                     className="bg-background/50 h-12 pl-10 text-base transition-colors focus-visible:ring-primary w-full"

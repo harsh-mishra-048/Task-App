@@ -31,7 +31,7 @@ export default function SharedTasks() {
   const fetchSharedTodos = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/todos/shared");
+      const res = await fetch("/task_app/api/todos/shared");
       if (res.ok) {
         const data = await res.json();
         setGroupedTodos(data);
@@ -46,7 +46,7 @@ export default function SharedTasks() {
   const toggleSharedTaskStatus = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === "pending" ? "completed" : "pending";
     try {
-      const res = await fetch(`/api/todos/${id}`, {
+      const res = await fetch(`/task_app/api/todos/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -80,8 +80,8 @@ export default function SharedTasks() {
             </Button>
           </Link>
           {selectedUser && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => setSelectedUser(null)}
               className="hover:bg-muted/50 rounded-full"
             >
@@ -92,12 +92,12 @@ export default function SharedTasks() {
 
         <header>
           <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 flex items-center gap-3">
-            <Network className="h-10 w-10 text-primary" /> 
+            <Network className="h-10 w-10 text-primary" />
             {selectedUser ? `Assigned by: ${selectedUser}` : "Tasks Assigned to Me"}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {selectedUser 
-              ? `Tasks delegated to you by ${selectedUser}` 
+            {selectedUser
+              ? `Tasks delegated to you by ${selectedUser}`
               : "Review and manage tasks that have been specifically assigned to you by your network."}
           </p>
         </header>
@@ -116,8 +116,8 @@ export default function SharedTasks() {
           /* List of Connections */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {emails.map((email) => (
-              <Card 
-                key={email} 
+              <Card
+                key={email}
                 className="border-none shadow-lg bg-card/60 backdrop-blur-xl hover:bg-muted/10 transition-all cursor-pointer group"
                 onClick={() => setSelectedUser(email)}
               >
@@ -151,16 +151,15 @@ export default function SharedTasks() {
               <CardContent className="p-6">
                 <ul className="space-y-3">
                   {groupedTodos[selectedUser].map((todo) => (
-                    <li 
-                      key={todo.id} 
-                      className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
-                        todo.status === "completed" 
-                          ? "bg-muted/30 border-transparent opacity-75" 
+                    <li
+                      key={todo.id}
+                      className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${todo.status === "completed"
+                          ? "bg-muted/30 border-transparent opacity-75"
                           : "bg-background border-border shadow-sm hover:shadow-md"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-4 flex-1">
-                        <button 
+                        <button
                           onClick={() => toggleSharedTaskStatus(todo.id, todo.status)}
                           className="text-primary hover:scale-110 transition-transform"
                           title="Toggle Status"
@@ -176,12 +175,12 @@ export default function SharedTasks() {
                             {todo.title}
                           </h3>
                           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" /> 
-                            {new Date(todo.target_date).toLocaleDateString(undefined, { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
+                            <Calendar className="h-3 w-3" />
+                            {new Date(todo.target_date).toLocaleDateString(undefined, {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
                             })}
                           </p>
                         </div>

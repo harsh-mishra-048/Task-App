@@ -32,7 +32,7 @@ export default function Home() {
 
   const fetchTodos = async (date?: string) => {
     setLoading(true);
-    let url = "/api/todos";
+    let url = "/task_app/api/todos";
     if (date && date !== "all") {
       url += `?date=${date}`;
     }
@@ -46,7 +46,7 @@ export default function Home() {
 
   const toggleStatus = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === "pending" ? "completed" : "pending";
-    const res = await fetch(`/api/todos/${id}`, {
+    const res = await fetch(`/task_app/api/todos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
@@ -55,7 +55,7 @@ export default function Home() {
   };
 
   const deleteTodo = async (id: number) => {
-    const res = await fetch(`/api/todos/${id}`, { method: "DELETE" });
+    const res = await fetch(`/task_app/api/todos/${id}`, { method: "DELETE" });
     if (res.ok) fetchTodos(filterDate);
   };
 
@@ -168,8 +168,8 @@ export default function Home() {
                   <li
                     key={todo.id}
                     className={`group flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${todo.status === "completed"
-                        ? "bg-muted/30 border-transparent opacity-75"
-                        : "bg-background border-border shadow-sm hover:shadow-md"
+                      ? "bg-muted/30 border-transparent opacity-75"
+                      : "bg-background border-border shadow-sm hover:shadow-md"
                       }`}
                   >
                     <div className="flex items-center gap-4 flex-1">

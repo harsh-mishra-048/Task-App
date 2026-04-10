@@ -37,7 +37,7 @@ export default function Connections() {
 
   const fetchConnections = async () => {
     try {
-      const res = await fetch("/api/connections");
+      const res = await fetch("/task_app/api/connections");
       if (res.ok) {
         const data = await res.json();
         setSentConnections(data.sent || []);
@@ -68,7 +68,7 @@ export default function Connections() {
     setSuccess("");
 
     try {
-      const res = await fetch("/api/connections", {
+      const res = await fetch("/task_app/api/connections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ invited_email: invitedEmail }),
@@ -91,7 +91,7 @@ export default function Connections() {
 
   const handleAcceptLocal = async (id: number) => {
     try {
-      const res = await fetch("/api/connections/acceptLocal", {
+      const res = await fetch("/task_app/api/connections/acceptLocal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -123,7 +123,7 @@ export default function Connections() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
           </Button>
         </Link>
-        
+
         <header className="mb-8">
           <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 flex items-center gap-3">
             <Users className="h-10 w-10 text-primary" /> Connections
@@ -151,10 +151,10 @@ export default function Connections() {
                     <Label htmlFor="email">Email Address</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="email" 
+                      <Input
+                        id="email"
                         type="email"
-                        placeholder="colleague@example.com" 
+                        placeholder="colleague@example.com"
                         value={invitedEmail}
                         onChange={(e) => setInvitedEmail(e.target.value)}
                         className="pl-9 bg-background/50"
@@ -216,9 +216,9 @@ export default function Connections() {
                         {conn.status === 'accepted' ? (
                           <span className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full"><Users className="h-3 w-3" /> Connection Active</span>
                         ) : (
-                          <Button 
+                          <Button
                             onClick={() => handleAcceptLocal(conn.id)}
-                            size="sm" 
+                            size="sm"
                             variant="secondary"
                             className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
                           >

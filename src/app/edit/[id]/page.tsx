@@ -32,7 +32,7 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
 
     const fetchTodo = async () => {
       try {
-        const res = await fetch(`/api/todos/${id}`);
+        const res = await fetch(`/task_app/api/todos/${id}`);
         if (res.ok) {
           const data = await res.json();
           setTitle(data.title);
@@ -60,7 +60,7 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
     setError("");
 
     try {
-      const res = await fetch(`/api/todos/${id}`, {
+      const res = await fetch(`/task_app/api/todos/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +102,7 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
           </Button>
         </Link>
-        
+
         <Card className="border-none shadow-2xl bg-card/60 backdrop-blur-xl">
           <CardHeader className="text-center pb-8 border-b border-border/50">
             <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
@@ -119,12 +119,12 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-3">
                 <Label htmlFor="title" className="text-base">Task Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="e.g., Read a book for 30 minutes" 
+                <Input
+                  id="title"
+                  placeholder="e.g., Read a book for 30 minutes"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="bg-background/50 h-12 text-base transition-colors focus-visible:ring-primary"
@@ -142,9 +142,9 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <Input 
+                  <Input
                     type="date"
-                    id="targetDate" 
+                    id="targetDate"
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
                     className="bg-background/50 h-12 pl-10 text-base transition-colors focus-visible:ring-primary w-full"
