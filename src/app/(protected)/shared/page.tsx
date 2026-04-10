@@ -60,7 +60,7 @@ export default function SharedTasks() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <main className="flex-1 bg-gradient-to-br from-background to-secondary/20 p-8 min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

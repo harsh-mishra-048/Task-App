@@ -29,12 +29,6 @@ export default function Connections() {
   const [receivedConnections, setReceivedConnections] = useState<Connection[]>([]);
   const [fetching, setFetching] = useState(true);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
-
   const fetchConnections = async () => {
     try {
       const res = await fetch("/task_app/api/connections");
@@ -106,14 +100,6 @@ export default function Connections() {
       console.error("Network error accepting invitation", err);
     }
   };
-
-  if (status === "loading" || status === "unauthenticated" || fetching) {
-    return (
-      <main className="flex-1 bg-gradient-to-br from-background to-secondary/20 p-8 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </main>
-    );
-  }
 
   return (
     <main className="flex-1 bg-gradient-to-br from-background to-secondary/20 p-8 min-h-screen">
@@ -235,5 +221,5 @@ export default function Connections() {
         </div>
       </div>
     </main>
-  );
+  )
 }

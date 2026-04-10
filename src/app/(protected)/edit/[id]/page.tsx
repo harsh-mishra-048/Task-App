@@ -21,11 +21,6 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -86,7 +81,7 @@ export default function EditTodo({ params }: { params: Promise<{ id: string }> }
     setTargetDate(today);
   };
 
-  if (status === "loading" || status === "unauthenticated" || fetching) {
+  if (fetching) {
     return (
       <main className="flex-1 bg-gradient-to-br from-background to-secondary/20 p-8 min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
