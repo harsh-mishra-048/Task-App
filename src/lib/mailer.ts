@@ -11,7 +11,7 @@ export async function sendInviteEmail(to: string, invitorEmail: string, token: s
     },
   });
 
-  const appUrl = process.env.NEXTAUTH_URL;
+  const appUrl = process.env.NEXT_URL;
   const acceptLink = `${appUrl}/api/connections/accept?token=${token}`;
 
   const mailOptions = {
